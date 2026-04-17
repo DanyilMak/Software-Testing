@@ -11,16 +11,15 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+// 📊 Міграції та сидінг
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
     db.Database.Migrate();
 
     if (!db.Students.Any())
     {
         var students = new List<Student>();
-
         for (int i = 1; i <= 10000; i++)
         {
             students.Add(new Student
@@ -30,7 +29,6 @@ using (var scope = app.Services.CreateScope())
                 Email = $"student{i}@test.com"
             });
         }
-
         db.Students.AddRange(students);
         db.SaveChanges();
     }
@@ -38,7 +36,9 @@ using (var scope = app.Services.CreateScope())
 
 // 🌐 Middleware
 app.UseAuthorization();
-
 app.MapControllers();
+
+// ✅ Health endpoint для CI/CD
+app.MapGet("/health/ready", () => Results.Ok("ready"));
 
 app.Run();
