@@ -63,7 +63,7 @@ jobs:
 
       - name: Start API
         env:
-          ASPNETCORE_URLS: http://localhost:5067
+          ASPNETCORE_URLS: http://localhost:5052
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=studentsdb;Username=postgres;Password=postgres"
         run: dotnet run --project Lab7.Api --no-build &
 
@@ -71,7 +71,7 @@ jobs:
         run: |
           echo "Waiting for API to become ready..."
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:5067/api/students > /dev/null 2>&1; then
+            if curl -sf http://localhost:5052/api/students > /dev/null 2>&1; then
               echo "API is ready!"
               exit 0
             fi
@@ -92,7 +92,7 @@ jobs:
 
       - name: Run k6 ${{ steps.test-type.outputs.type }} test
         working-directory: Lab7/Lab7.Tests/K6
-        run: k6 run -e BASE_URL=http://localhost:5067 ${{ steps.test-type.outputs.type }}.js --summary-export=results.json
+        run: k6 run -e BASE_URL=http://localhost:5052 ${{ steps.test-type.outputs.type }}.js --summary-export=results.json
 
       - name: Upload k6 results
         if: always()
