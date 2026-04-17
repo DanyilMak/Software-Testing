@@ -11,7 +11,6 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// 🔥 Міграції + Seed 10000 студентів
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
