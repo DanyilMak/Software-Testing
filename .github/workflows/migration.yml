@@ -1,0 +1,70 @@
+name: Migration
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'Lab7/Lab7.Api/**'
+
+jobs:
+  validate-migrations:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: studentsdb
+        ports:
+          - 5433:5433
+        options: >-
+          --health-cmd="pg_isready -U postgres -p 5433"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    defaults:
+      run:
+        working-directory: Lab7/Lab7.Api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install EF Core tools
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore
+
+      - name: Check for pending model changes
+        run: dotnet ef migrations has-pending-model-changes --project Lab7.Api --startup-project Lab7.Api
+
+      - name: Apply migrations
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=studentsdb;Username=postgres;Password=postgres"
+        run: dotnet ef database update --project Lab7.Api --startup-project Lab7.Api
+
+      - name: Run application to seed data
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=studentsdb;Username=postgres;Password=postgres"
+        run: dotnet run --project Lab7.Api --no-build
+
+      - name: Generate idempotent SQL script
+        run: dotnet ef migrations script --idempotent --project Lab7.Api --startup-project Lab7.Api --output migrations.sql
+
+      - name: Upload migration script
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-sql
+          path: Lab7/Lab7.Api/migrations.sql
