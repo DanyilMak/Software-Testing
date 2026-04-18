@@ -5,3 +5,6 @@ obj/
 *.exe
 *.dll
 *.vs/
+node_modules/
+playwright-report/
+test-results/
